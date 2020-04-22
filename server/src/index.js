@@ -1,4 +1,5 @@
 const path = require('path');
+var http = require('http')
 
 const morgan = require('morgan');
 const express = require('express');
@@ -18,7 +19,7 @@ const client = path.resolve(__dirname, '..', '..', 'client');
 const inTest = process.env.NODE_ENV === 'test';
 const views = path.resolve(client, 'views');
 
-async function startServer(port = process.env.SERVER_PORT) {
+async function startServer(port=process.env.SERVER_PORT) {
     port = port || (await detectPort(3000));
     await models.createTables();
 
@@ -33,7 +34,7 @@ async function startServer(port = process.env.SERVER_PORT) {
 
     nunjucks.configure(path.resolve(client, 'views'), {
         autoescape: true,
-        express: app,
+        express: app
     });
 
     // rutas de la vista
@@ -44,23 +45,22 @@ async function startServer(port = process.env.SERVER_PORT) {
 
     return new Promise(function (resolve) {
         const server = app.listen(port, function () {
-            !inTest &&
-                console.log(`Server started on http://localhost:${port}`);
+            !inTest && console.log(`Server started on http://localhost:${port}`);
 
             const originalClose = server.close.bind(server);
-            server.close = async () => {
+            server.close = async (clearDB) => {
                 if (inTest) {
                     await models.dropTables();
                 }
 
-                return new Promise((resolveClose) => {
+                return new Promise(resolveClose => {
                     originalClose(resolveClose);
-                });
-            };
+                })
+            }
 
             resolve(server);
         });
-    });
+    })
 }
 
 if (require.main === module) {
